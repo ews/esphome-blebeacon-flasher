@@ -1,0 +1,67 @@
+* ESPHome BLE Beacon Flasher
+This project is a flasher utility for ESPHome BLE beacon configurations, using Docker to manage ESPHome flashing tasks. It is designed to run ESPHome configurations over USB to quickly set up and flash firmware to ESP32 devices configured as BLE beacons.
+
+** Prerequisites
+To use this flasher, ensure the following:
+- Docker is installed and running.
+- Your ESP32 device is connected to the `/dev/ttyUSB0` port on your computer.
+
+** Usage
+1. **Prepare the Configuration**
+   - Write your ESPHome configuration in a file called ~template.yaml~. This file should specify the BLE beacon setup for your ESP32 device.
+
+2. **Run the Flasher**
+   - Use the included Makefile to run the flasher script, which performs the following steps:
+     - Generates required files with the correct settings.
+     - Automatically flashes the device over USB.
+
+   To flash your ESP32 device:
+   #+BEGIN_SRC shell
+   make
+   #+END_SRC
+
+** Makefile Details
+The Makefile includes the following targets:
+- ~run_script~: Executes the Python script to generate necessary configurations.
+- ~run_docker~: Runs the Docker container with ESPHome to flash the firmware over USB.
+- ~clean~: Removes any generated files to reset the environment.
+
+** Docker Command Details
+The Docker command used for flashing:
+#+BEGIN_SRC shell
+docker run --rm --privileged -v "${PWD}":/config --device=/dev/ttyUSB0 -it ghcr.io/esphome/esphome run template.yaml --device /dev/ttyUSB0
+#+END_SRC
+
+- **--rm**: Removes the container after it finishes executing.
+- **--privileged**: Allows access to devices on your system.
+- **-v "${PWD}":/config**: Mounts the current directory into the container at ~config~, where ESPHome expects configuration files.
+- **--device=/dev/ttyUSB0**: Passes the USB device to the container, specifying the ESP32 connection.
+- **-it**: Runs interactively so you can monitor flashing progress.
+
+** Configuration Guide
+Ensure your ~template.yaml~ file includes the necessary BLE beacon settings for ESPHome. Here's a sample minimal configuration:
+
+#+BEGIN_SRC yaml
+esphome:
+  name: ble_beacon
+  platform: ESP32
+  board: esp32dev
+
+esp32_ble_beacon:
+  type: iBeacon
+  uuid: 'YOUR-UUID-HERE'
+  major: 1
+  minor: 1
+#+END_SRC
+
+Replace ~YOUR-UUID-HERE~ with your desired UUID for the beacon.
+
+** Notes
+- The Makefile and this setup assume your ESP32 is connected as ~ttyUSB0~. If your device connects differently, adjust the Docker command in the Makefile accordingly.
+- If you modify ~template.yaml~, rerun the ~make~ command to generate and flash updated firmware.
+
+** Troubleshooting
+- Ensure your ESP32 is connected and recognized as ~ttyUSB0~. Use ~ls /dev/ttyUSB*~ to confirm.
+- If Docker fails to find the ESP32 device, check your permissions or try adding your user to the ~dialout~ group.
+
+This flasher simplifies flashing ESPHome BLE beacon configurations over USB, making the process consistent and easy to run on multiple devices.
